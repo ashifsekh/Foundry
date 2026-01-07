@@ -22,7 +22,7 @@ constructor(){
     if (block.chainid == 11155111) {
         activeNetworkConfig = getSepoliaEthConfig();
     } else {
-        activeNetworkConfig = getAnvilEthConfig();
+        activeNetworkConfig = getOrCreateAnvilEthConfig();
     }
 }
 
@@ -34,7 +34,10 @@ function getSepoliaEthConfig() public pure returns (NetworkConfig memory) {
     return sepoliaConfig;
 }
 
-function getAnvilEthConfig() public returns (NetworkConfig memory) {
+function getOrCreateAnvilEthConfig() public returns (NetworkConfig memory) {
+    if (activeNetworkConfig.priceFeed != address(0)) {
+    return activeNetworkConfig;
+}
 
     vm.startBroadcast();
     mockPriceFeed = new MockV3Aggregator(DECIMALS, INITIAL_PRICE);
