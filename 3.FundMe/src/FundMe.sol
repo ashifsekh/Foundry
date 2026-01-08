@@ -75,6 +75,20 @@ contract FundMe {
         }("");
         require(callSuccess, "Call failed");
     }
+
+    function cheaperWithdraw() public onlyOwner {
+        address[] memory funders = s_funders;
+        uint256 fundersLength = funders.length;
+        for (uint256 i = 0; i < fundersLength; i++) {
+            address funder = funders[i];
+            s_addressToAmountFunded[funder] = 0;
+        }
+        s_funders = new address[](0);
+        (bool callSuccess, ) = payable(msg.sender).call{
+            value: address(this).balance
+        }("");
+        require(callSuccess, "Call failed");
+    }
     // Explainer from: https://solidity-by-example.org/fallback/
     // Ether is sent to contract
     //      is msg.data empty?
@@ -113,5 +127,9 @@ contract FundMe {
 
     function getFunder(uint256 index) public view returns (address) {
         return s_funders[index];
+    }
+
+    function getFunderCount() public view returns (uint256) {
+        return s_funders.length;
     }
 }
