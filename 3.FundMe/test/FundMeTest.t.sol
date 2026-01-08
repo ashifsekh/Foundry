@@ -112,6 +112,18 @@ function testWithdrawFromMultipleFunders() public funded {
     assert((numberOfFunders + 1) * SEND_VALUE == fundMe.iOwner().balance - startingOwnerBalance);
 }
 
+   function cheaperWithdraw() public onlyOwner {
+    uint256 fundersLength = s_funders.length;
+    for(uint256 funderIndex = 0; funderIndex < fundersLength; funderIndex++) {
+        address funder = s_funders[funderIndex];
+        s_addressToAmountFunded[funder] = 0;
+    }
+    s_funders = new address[](0);
+
+    (bool callSuccess,) = payable(msg.sender).call{value: address(this).balance}("");
+    require(callSuccess, "Call failed");
+}
+
    function testPrintStorageData() public {
     for (uint256 i = 0; i < 3; i++) {
         bytes32 value = vm.load(address(fundMe), bytes32(i));
