@@ -2,7 +2,9 @@
 pragma solidity ^0.8.18;
 
 // Note: The AggregatorV3Interface might be at a different location than what was in the video!
-import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import {
+    AggregatorV3Interface
+} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 import {PriceConvertor} from "./PriceConvertor.sol";
 
 error NotOwner();
@@ -11,12 +13,11 @@ contract FundMe {
     using PriceConvertor for uint256;
     AggregatorV3Interface private s_priceFeed;
 
-
     mapping(address => uint256) private s_addressToAmountFunded;
     address[] private s_funders;
 
     // Could we make this constant?  /* hint: no! We should make it immutable! */
-    address public  iOwner;
+    address public iOwner;
     uint256 public constant MINIMUM_USD = 5 * 10 ** 18;
 
     constructor(address priceFeed) {
@@ -25,7 +26,10 @@ contract FundMe {
     }
 
     function fund() public payable {
-        require(msg.value.getConversionRate(s_priceFeed) >= MINIMUM_USD, "You need to spend more ETH!");
+        require(
+            msg.value.getConversionRate(s_priceFeed) >= MINIMUM_USD,
+            "You need to spend more ETH!"
+        );
         // require(PriceConverter.getConversionRate(msg.value) >= MINIMUM_USD, "You need to spend more ETH!");
         s_addressToAmountFunded[msg.sender] += msg.value;
         s_funders.push(msg.sender);
@@ -37,7 +41,7 @@ contract FundMe {
 
     function getPriceFeed() public view returns (AggregatorV3Interface) {
         return s_priceFeed;
-}
+    }
 
     modifier onlyOwner() {
         _onlyOwner();
@@ -49,7 +53,11 @@ contract FundMe {
     }
 
     function withdraw() public onlyOwner {
-        for (uint256 funderIndex = 0; funderIndex < s_funders.length; funderIndex++) {
+        for (
+            uint256 funderIndex = 0;
+            funderIndex < s_funders.length;
+            funderIndex++
+        ) {
             address funder = s_funders[funderIndex];
             s_addressToAmountFunded[funder] = 0;
         }
@@ -62,7 +70,9 @@ contract FundMe {
         // require(sendSuccess, "Send failed");
 
         // call
-        (bool callSuccess,) = payable(msg.sender).call{value: address(this).balance}("");
+        (bool callSuccess, ) = payable(msg.sender).call{
+            value: address(this).balance
+        }("");
         require(callSuccess, "Call failed");
     }
     // Explainer from: https://solidity-by-example.org/fallback/
@@ -85,18 +95,19 @@ contract FundMe {
         fund();
     }
 
+    // Concepts we didn't cover yet (will cover in later sections)
+    // 1. Enum
+    // 2. Events
+    // 3. Try / Catch
+    // 4. Function Selector
+    // 5. abi.encode / decode
+    // 6. Hash with keccak256
+    // 7. Yul / Assembly
 
-// Concepts we didn't cover yet (will cover in later sections)
-// 1. Enum
-// 2. Events
-// 3. Try / Catch
-// 4. Function Selector
-// 5. abi.encode / decode
-// 6. Hash with keccak256
-// 7. Yul / Assembly
-
-/** Getter Functions */
-    function getAddressToAmountFunded(address fundingAddress) public view returns (uint256) {
+    /** Getter Functions */
+    function getAddressToAmountFunded(
+        address fundingAddress
+    ) public view returns (uint256) {
         return s_addressToAmountFunded[fundingAddress];
     }
 
@@ -104,5 +115,3 @@ contract FundMe {
         return s_funders[index];
     }
 }
-
- 
