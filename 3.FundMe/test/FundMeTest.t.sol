@@ -136,6 +136,28 @@ contract FundMeTest is Test {
         );
     }
 
+    function testWithdrawFromMultipleFundersCheaper() public funded {
+    uint160 numberOfFunders = 10;
+    uint160 startingFunderIndex = 1;
+    for (uint160 i = startingFunderIndex; i < numberOfFunders + startingFunderIndex; i++) {
+        // we get hoax from stdcheats
+        // prank + deal
+        hoax(address(i), SEND_VALUE);
+        fundMe.fund{value: SEND_VALUE}();
+    }
+
+    uint256 startingFundMeBalance = address(fundMe).balance;
+    uint256 startingOwnerBalance = fundMe.iOwner().balance;
+
+    vm.startPrank(fundMe.iOwner());
+    fundMe.cheaperWithdraw();
+    vm.stopPrank();
+
+    assert(address(fundMe).balance == 0);
+    assert(startingFundMeBalance + startingOwnerBalance == fundMe.iOwner().balance);
+    assert((numberOfFunders + 1) * SEND_VALUE == fundMe.iOwner().balance - startingOwnerBalance);
+}
+
    
     function testPrintStorageData() public {
         for (uint256 i = 0; i < 3; i++) {
