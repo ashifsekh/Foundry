@@ -83,6 +83,24 @@ contract FundMeTest is Test {
         );
     }
 
+     function testCheaperWithdrawSingleFunder() public funded {
+        uint256 startingOwnerBalance = getOwner().balance;
+        uint256 startingFundMeBalance = address(fundMe).balance;
+
+        vm.prank(getOwner());
+        fundMe.cheaperWithdraw();
+
+        uint256 endingOwnerBalance = getOwner().balance;
+        uint256 endingFundMeBalance = address(fundMe).balance;
+
+        assertEq(endingFundMeBalance, 0);
+        assertEq(
+            startingFundMeBalance + startingOwnerBalance,
+            endingOwnerBalance
+        );
+    }
+
+
     function testWithdrawFromMultipleFunders() public funded {
         uint160 numberOfFunders = 10;
         uint160 startingFunderIndex = 1;
@@ -118,23 +136,7 @@ contract FundMeTest is Test {
         );
     }
 
-    function testCheaperWithdrawSingleFunder() public funded {
-        uint256 startingOwnerBalance = getOwner().balance;
-        uint256 startingFundMeBalance = address(fundMe).balance;
-
-        vm.prank(getOwner());
-        fundMe.cheaperWithdraw();
-
-        uint256 endingOwnerBalance = getOwner().balance;
-        uint256 endingFundMeBalance = address(fundMe).balance;
-
-        assertEq(endingFundMeBalance, 0);
-        assertEq(
-            startingFundMeBalance + startingOwnerBalance,
-            endingOwnerBalance
-        );
-    }
-
+   
     function testPrintStorageData() public {
         for (uint256 i = 0; i < 3; i++) {
             bytes32 value = vm.load(address(fundMe), bytes32(i));
