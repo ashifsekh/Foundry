@@ -1,36 +1,44 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
+
 pragma solidity ^0.8.19;
 
-import {Script, console} from "forge-std/Script.sol";
+import {DeployFundMe} from "../../script/DeployFundMe.s.sol";
+import {FundFundMe, WithdrawFundMe} from "../../script/Interactions.s.sol";
 import {FundMe} from "../../src/FundMe.sol";
-import {DevOpsTools} from "foundry-devops/src/DevOpsTools.sol";
+import {Test, console} from "forge-std/Test.sol";
 
-contract FundFundMe is Script {
-    uint256 SEND_VALUE = 0.1 ether;
+contract InteractionsTest is Test {
+    FundMe public fundMe;
+    DeployFundMe deployFundMe;
 
-    function fundFundMe(address mostRecentlyDeployed) public {
-        vm.startBroadcast();
-        FundMe(payable(mostRecentlyDeployed)).fund{value: SEND_VALUE}();
-        vm.stopBroadcast();
-        console.log("Funded FundMe with %s", SEND_VALUE);
+    uint256 public constant SEND_VALUE = 0.1 ether;
+    uint256 public constant STARTING_USER_BALANCE = 10 ether;
+
+    address alice = makeAddr("alice");
+
+
+    function setUp() external {
+        deployFundMe = new DeployFundMe();
+        fundMe = deployFundMe.run();
+        vm.deal(alice, STARTING_USER_BALANCE);
     }
 
-    function run() external {
-        address mostRecentlyDeployed = DevOpsTools.get_most_recent_deployment("FundMe", block.chainid);
-        fundFundMe(mostRecentlyDeployed);
-    }
-}
+    function testUserCanFundAndOwnerWithdraw() public {
+        uint256 preUserBalance = address(alice).balance;
+        uint256 preOwnerBalance = address(fundMe.iOwner()).balance;
 
-contract WithdrawFundMe is Script {
-    function withdrawFundMe(address mostRecentlyDeployed) public {
-        vm.startBroadcast();
-        FundMe(payable(mostRecentlyDeployed)).withdraw();
-        vm.stopBroadcast();
-        console.log("Withdraw FundMe balance!");
-    }
+        // Using vm.prank to simulate funding from the USER address
+        vm.prank(alice);
+        fundMe.fund{value: SEND_VALUE}();
 
-    function run() external {
-        address mostRecentlyDeployed = DevOpsTools.get_most_recent_deployment("FundMe", block.chainid);
-        withdrawFundMe(mostRecentlyDeployed);
+        WithdrawFundMe withdrawFundMe = new WithdrawFundMe();
+        withdrawFundMe.withdrawFundMe(address(fundMe));
+
+        uint256 afterUserBalance = address(alice).balance;
+        uint256 afterOwnerBalance = address(fundMe.iOwner()).balance;
+
+        assert(address(fundMe).balance == 0);
+        assertEq(afterUserBalance + SEND_VALUE, preUserBalance);
+        assertEq(preOwnerBalance + SEND_VALUE, afterOwnerBalance);
     }
 }
